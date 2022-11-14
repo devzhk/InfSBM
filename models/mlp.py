@@ -19,7 +19,8 @@ class MLP(nn.Module):
         ])
 
     def forward(self, x, t):
-        y = torch.cat([x, t[:, None]], dim=2)
+
+        y = torch.cat([x, t[:, None]], dim=-1)
         for i, layer in enumerate(self.layers):
             y = layer(y)
             if i < len(self.layers):
