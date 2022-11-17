@@ -14,13 +14,23 @@ class Gscore(object):
         self.var = data_var
 
     def __call__(self, x, t):
+        """_summary_
+
+        Args:
+            x (tensor): (Batchsize, dim)
+            t (tensor): (Batchsize, 1)
+
+        Returns:
+            score: (Batchsize, dim)
+        """
         log_mean_coeff = -0.25 * t ** 2 * \
             (self.beta_max - self.beta_min) - 0.5 * t * self.beta_min
-        ht = np.exp(log_mean_coeff)
-        print(ht)
-        print(self.mean.shape)
-        print(self.var.shape)
-        vec = ht * self.mean - x
-        var = np.diag(ht * ht * self.var + (1 - ht * ht))
-        inv = np.linalg.inv(var)
-        return vec @ inv
+        ht = torch.exp(log_mean_coeff)[:, None]
+        # print(ht.shape)
+        # print(x.shape)
+        # print(self.mean.shape)
+        vec = ht * self.mean - x    # (B, dim)
+        var = ht * ht * self.var + (1 - ht * ht)
+        std = torch.sqrt(1 - ht * ht)
+        # B, dim
+        return - vec / var * std

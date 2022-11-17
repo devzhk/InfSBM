@@ -1,11 +1,11 @@
 data:
   dim: 2
-  num_samples: 512
+  num_samples: 256
   mean: [4.0, 4.0]
   std: [0.1, 0.1]
 
 model: 
-  layers: [3, 32, 32, 32, 32, 2]
+  layers: [3, 128, 128, 128, 128, 2]
   act: lrelu
   beta_min: 0.1
   beta_max: 20.
@@ -32,8 +32,8 @@ sampling:
   n_steps_each: 1
   noise_removal: True
   probability_flow: False
-  eps: 0.000001
+  eps: 0.00001
 
 
 log:
-  basedir: train-512
+  basedir: train-256

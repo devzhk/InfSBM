@@ -30,3 +30,24 @@ def plot_samples(samples, data_samples, save_path):
     df = pd.DataFrame(data=dat)
     fig = sns.jointplot(data=df, x='x', y='y', kind='scatter', hue='label')
     fig.savefig(save_path)
+
+
+def plot_dict(data_dict, save_path):
+    x_list = []
+    y_list = []
+    label_list = []
+    for key, value in data_dict.items():
+        x_list.append(value[..., 0])
+        y_list.append(value[..., 1])
+        label_list += [key] * value.shape[0]
+
+    x_array = np.concatenate(x_list, axis=None)
+    y_array = np.concatenate(y_list, axis=None)
+    dat = {
+        'x': x_array,
+        'y': y_array,
+        'label': label_list
+    }
+    df = pd.DataFrame(data=dat)
+    fig = sns.jointplot(data=df, x='x', y='y', kind='scatter', hue='label')
+    fig.savefig(save_path)

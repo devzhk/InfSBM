@@ -62,7 +62,7 @@ def train_fn(model, trainloader, optimizer, config, device):
         for data in trainloader:
             optimizer.zero_grad()
             data = data.to(device)
-            loss = loss_fn(model, sde, data)
+            loss = loss_fn(model, sde, data, eps=eps)
             loss.backward()
             if grad_clip > 0.:
                 torch.nn.utils.clip_grad_norm(
@@ -109,6 +109,6 @@ def subprocess(args):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, default='configs/gaussian.yml')
-
+    parser.add_argument('--seed', type=int, default=0)
     args = parser.parse_args()
     subprocess(args)
