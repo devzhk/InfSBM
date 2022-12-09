@@ -7,11 +7,11 @@ import torch
 
 class Gscore(object):
     def __init__(self, data_mean, data_var,
-                 beta_min=0.1, beta_max=20) -> None:
+                 beta_min=0.1, beta_max=20, device='cpu') -> None:
         self.beta_min = beta_min
         self.beta_max = beta_max
-        self.mean = data_mean[None, :]
-        self.var = data_var
+        self.mean = data_mean[None, :].to(device)
+        self.var = data_var.to(device)
 
     def __call__(self, x, t):
         """_summary_

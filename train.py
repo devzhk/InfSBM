@@ -65,7 +65,7 @@ def train_fn(model, trainloader, optimizer, config, device):
             loss = loss_fn(model, sde, data, eps=eps)
             loss.backward()
             if grad_clip > 0.:
-                torch.nn.utils.clip_grad_norm(
+                torch.nn.utils.clip_grad_norm_(
                     model.parameters(), max_norm=grad_clip)
             optimizer.step()
             train_loss += loss.item()

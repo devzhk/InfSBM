@@ -13,6 +13,13 @@ def dict2namespace(config):
     return namespace
 
 
+def count_params(model):
+    num = 0
+    for p in model.parameters():
+        num += p.numel()
+    return num
+
+
 def save_ckpt(path,
               model,
               #   model_ema,
