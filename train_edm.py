@@ -1,29 +1,18 @@
 import os
-import yaml
+from omegaconf import OmegaConf
 from argparse import ArgumentParser
 from tqdm import tqdm
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 
-from models.mlp import MLP
-from sampling import get_sampling_fn
+from models.mlp import VEPrecond, MLP
 
-from utils.sde_lib import VPSDE, VESDE, EDMSDE
-from utils.helper import dict2namespace, save_ckpt
+from train_utils.loss import VELoss
+
+from utils.helper import save_ckpt
 from utils.datasets import Gaussian
-from plots import plot_samples
 
-
-def loss_fn(model, sde, x, eps=0.0):
-    t = torch.rand(x.shape[0], device=x.device) * (sde.T - eps) + eps
-    z = torch.randn_like(x)
-    mean, std = sde.marginal_prob(x, t)
-    perturbed_data = mean + std[:, None] * z
-    score = model(perturbed_data, t)
-    losses = torch.square(z - score)
-    loss = torch.mean(losses)
-    return loss
 
 
 def train_fn(model, trainloader, optimizer, config, device):
@@ -43,23 +32,9 @@ def train_fn(model, trainloader, optimizer, config, device):
     num_epoch = config.train.num_epoch
     save_step = config.train.save_step
     eval_step = config.train.eval_step
-    eps = config.sampling.eps
     # setup sde
-    if config.model.sde == 'VP':
-        sde = VPSDE()
-    elif config.model.sde == 'VE':
-        sde = VESDE()
-    elif config.model.sde == 'EDM':
-        sde = EDMSDE()
-    print(f'SDE type: {config.model.sde}')
-    # setup sampling function
-    sample_shape = (100, config.data.dim)
+    loss_fn = VELoss(sigma_max=config.model.sigma_max, sigma_min=config.model.sigma_min)\
 
-    def scaler(x):
-        return x
-
-    sample_fn = get_sampling_fn(
-        config, sde, shape=sample_shape, inverse_scaler=scaler, eps=eps, device=device)
     # ---------
     pbar = tqdm(range(num_epoch))
     for e in pbar:
@@ -67,7 +42,7 @@ def train_fn(model, trainloader, optimizer, config, device):
         for data in trainloader:
             optimizer.zero_grad()
             data = data.to(device)
-            loss = loss_fn(model, sde, data, eps=eps)
+            loss = loss_fn(model, data)
             loss.backward()
             if grad_clip > 0.:
                 torch.nn.utils.clip_grad_norm_(
@@ -83,20 +58,11 @@ def train_fn(model, trainloader, optimizer, config, device):
         if e % save_step == 0 and e > 0:
             ckpt_path = os.path.join(ckpt_dir, f'model-{e}.pt')
             save_ckpt(ckpt_path, model, optim=optimizer)
-
-        if eval_step > 0 and e % eval_step == 0 and e > 0:
-            samples, n = sample_fn(model)
-            samples = samples.cpu().numpy()
-            fig_path = os.path.join(fig_dir, f'{e}.png')
-            print(fig_path)
-            plot_samples(samples, data_samples, fig_path)
     print('Finish training')
 
 
 def subprocess(args):
-    with open(args.config, 'r') as f:
-        config = yaml.load(f, yaml.FullLoader)
-    config = dict2namespace(config)
+    config = OmegaConf.load(args.config) 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model = MLP(config).to(device)
     optimizer = Adam(model.parameters(), lr=config.optim.lr)

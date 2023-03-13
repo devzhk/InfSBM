@@ -18,18 +18,21 @@ def plot(ts, samples, xlabel, ylabel, title='', savepath='exp/default/test.png')
     plt.savefig(savepath)
 
 
-def plot_samples(samples, data_samples, save_path):
-    x_array = np.concatenate(
-        (samples[..., 0], data_samples[..., 0]), axis=None)
-    y_array = np.concatenate(
-        (samples[..., 1], data_samples[..., 1]), axis=None)
-    dat = {'x': x_array,
-           'y': y_array,
-           'label': ['generated'] * samples.shape[0] + ['data'] * data_samples.shape[0]}
+def plot_samples(samples, data_samples, save_path, dim=2):
+    if dim == 2:
+        x_array = np.concatenate(
+            (samples[..., 0], data_samples[..., 0]), axis=None)
+        y_array = np.concatenate(
+            (samples[..., 1], data_samples[..., 1]), axis=None)
+        dat = {'x': x_array,
+            'y': y_array,
+            'label': ['generated'] * samples.shape[0] + ['data'] * data_samples.shape[0]}
 
-    df = pd.DataFrame(data=dat)
-    fig = sns.jointplot(data=df, x='x', y='y', kind='scatter', hue='label')
-    fig.savefig(save_path)
+        df = pd.DataFrame(data=dat)
+        fig = sns.jointplot(data=df, x='x', y='y', kind='scatter', hue='label')
+        fig.savefig(save_path)
+    elif dim == 1:
+        return
 
 
 def plot_dict(data_dict, save_path):
